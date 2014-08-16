@@ -42,7 +42,7 @@ def read_and_scrub(fileloc,word_dict,rebuild_word_dict=False):
     #unique_id=len(word_dict) #continue numbering unique id's here
     for i in reversed(range(len(email_word_list))):
         w = email_word_list[i]
-        if len(w) > 1: #skip 1 character words or punctuation and skip bs words.
+        if len(w) > 1: 
             w = PorterStemmer().stem(w)
             if len(w) > 20: #apparently it's a really long bs word. 
                 w='really_long_bs_word'
@@ -52,7 +52,7 @@ def read_and_scrub(fileloc,word_dict,rebuild_word_dict=False):
                     else:
                         word_dict[w] = 1
         else:
-            email_word_list.pop(i)
+            email_word_list.pop(i) #remove 1 character words or punctuation and skip bs words.
                       
     return email_word_list,word_dict
     
@@ -63,7 +63,6 @@ def update_progress(progress):
 def process_email_dir(directory,word_dict,rebuild_word_dict):
     
     #Read spam files, scrub & stem
-    
     files = [ f for f in os.listdir(directory) if (os.path.isfile(os.path.join(directory,f)) and f[0] <> ".") ]
 
     mail_list = []
@@ -93,6 +92,16 @@ def rand_init_theta(n_input,n_out):
     return (np.random.rand(n_out, 1 + n_input) * 2 * epsilon_init) - epsilon_init
     
 class NeuralNet3L(object):
+    """ Creates a 3 layer neural network with sigmoid layers
+    Args:
+        input layer nodes
+        hedden layer nodes
+        output lauer nodes
+        
+    Returns:
+        NeuralNet3L object with random initialized connectors
+    """
+    
     def __init__(self,n_input,n_middle,n_out):
         self.n_input = n_input
         self.n_middle = n_middle
@@ -122,6 +131,16 @@ class NeuralNet3L(object):
         return {'A1':A1,'A2':A2,'A3':A3,'Z2':Z2}
     
     def activate(self,X):
+        """ Activates the neural network
+        
+        Args
+            X - numpy array containing inputs on wanted examples
+            Array width should be the number of input nodes
+            Usually X=DataSet['input']
+            
+        Returns
+            Numpy array with predictions
+        """
         return self.activate_all_layers(X,self.theta1,self.theta2)['A3']
     
     def nn_cost_grad_func(self,theta_vec,DS,lambda_reg):
@@ -166,6 +185,13 @@ class NeuralNet3L(object):
         return J,grad
     
     def train(self,DS,lambda_reg=1,maxiter=10):
+        """ Trains the neural network
+        
+        Args
+            Dataset (PyBrain Dataset object)
+            lambda_reg = 1 (optional regularization)
+            maxiter = 10 (optional max iterations on training)
+        """
         np.seterr(all='print')
         
         #unroll initial theta
