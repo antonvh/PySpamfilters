@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 #settings
 programdir = os.path.dirname(__file__)
-dict_size = 2000
+dict_size = 1000
 force_rebuild_dictionary =True
 
 
@@ -68,20 +68,23 @@ if rebuild_word_dict:
 ######## Build training set and save to file ############
 print "Saving to file..."
 #PyBrain has some nice classes to do all this.
-from pybrain.datasets import ClassificationDataSet
-DS = ClassificationDataSet(dict_size, nb_classes=2, class_labels=['Not spam','Spam'])
+from pybrain.datasets import SupervisedDataSet
+import numpy as np
+
+DS = SupervisedDataSet(dict_size,1)
 
 for m_list,target in [[spamlist,1],[hamlist,0]]:
     for mail in m_list:
         #each data point is a list (or vector) the size of the dictionary
-        wordvector=[0]*dict_size 
+        wordvector=np.zeros(dict_size)
         #now go through the email and put the occurrences of each word
         #in it's respective spot (i.e. word_dict[word]) in the vector 
         for word in mail:
             if word in word_dict:
                 wordvector[word_dict[word]] += 1
-        DS.appendLinked(wordvector   , [target])
+        DS.appendLinked(np.log(wordvector+1)   , [target]) #put word occurrences on a log scale
 
 #TODO: use MySQL instead of csv
 DS.saveToFile('dataset.csv')
+print "Done."
 
