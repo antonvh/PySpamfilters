@@ -152,7 +152,7 @@ class NeuralNet3L(object):
         Theta2_grad = D3.T.dot(activations['A2'])/m
         Theta1_grad = D2.T.dot(activations['A1'])/m
 
-        #regularize gradient using masks the avoid regularizing the Bias nodes
+        #regularize gradient using masks to avoid regularizing the Bias nodes
         Theta2Mask = np.ones(np.shape(self.theta2))
         Theta2Mask[:,0] = 0 # set the first column to zero
         Theta1Mask = np.ones(np.shape(self.theta1))
@@ -167,12 +167,14 @@ class NeuralNet3L(object):
     
     def train(self,DS,lambda_reg=1,maxiter=10):
         np.seterr(all='print')
+        
         #unroll initial theta
         start_theta_vec = np.append(
                                     np.reshape(self.theta1,-1),
                                     np.reshape(self.theta2,-1)
                                     )
         
+        #minimize the cost of the net parameters
         result = minimize(self.nn_cost_grad_func, 
                           x0=start_theta_vec,
                           args = (DS,lambda_reg),
@@ -181,6 +183,7 @@ class NeuralNet3L(object):
                           options={'maxiter':maxiter,'disp':True}
                           ) 
         
+        #set resulting parameters
         self.theta1 = np.reshape(result.x[:self.theta1.size],self.theta1.shape)
         self.theta2 = np.reshape(result.x[self.theta1.size:],self.theta2.shape)
         
