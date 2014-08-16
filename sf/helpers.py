@@ -125,30 +125,38 @@ class NeuralNet3L(object):
         return self.activate_all_layers(X,self.theta1,self.theta2)['A3']
     
     def nn_cost_grad_func(self,theta_vec,DS,lambda_reg):
+        #reshape the function coefficients into nn matrices
         theta1 = np.reshape(theta_vec[:self.theta1.size],self.theta1.shape)
         theta2 = np.reshape(theta_vec[self.theta1.size:],self.theta2.shape)
         
+        #run the nn and get activations for all layers - needed to calculate gradient
         activations=self.activate_all_layers(DS['input'],theta1,theta2)
-        TargetA3 = DS['target'] #y or target activations
-        m=len(DS)               #number of samples in test set
-        #calculate cost
-        J = sum(sum(-TargetA3*np.log(activations['A3'])-(1-TargetA3)*np.log(1-activations['A3'])))/m
         
-        #regularize J
+        #number of samples in test set
+        m=len(DS)  
+                     
+        #calculate cost, i.e. the total error on the nn. when running all examples
+        J = sum(sum(-DS['target']*np.log(activations['A3'])-(1-DS['target'])*np.log(1-activations['A3'])))/m
+        
+        #regularize J, i.e. avoid overfitting by dampening large coefficients
         J = J+lambda_reg/2/m*(sum(sum(theta1[:,1:]**2))+sum(sum(theta2[:,1:]**2)))
         
-        #calculate gradient
-        D3 = activations['A3']-TargetA3
-        D2 = (D3.dot(theta2))[:,1:]*sigmoid_gradient(activations['Z2'])
+        #calculate gradient, i.e. the direction in which to move the coefficients
+        #to make the total cost lower.
+        #First: difference matrix between wanted output and current output
+        D3 = activations['A3']-DS['target']
+        #Next: the difference between wanted and needed output on the second layer 
+        D2 = (D3.dot(theta2))[:,1:]*sigmoid_gradient(activations['Z2']) 
+        
+        #Finally calculate gradients with the derivative cost function
         Theta2_grad = D3.T.dot(activations['A2'])/m
         Theta1_grad = D2.T.dot(activations['A1'])/m
 
-        #regularize gradient
+        #regularize gradient using masks the avoid regularizing the Bias nodes
         Theta2Mask = np.ones(np.shape(self.theta2))
         Theta2Mask[:,0] = 0 # set the first column to zero
         Theta1Mask = np.ones(np.shape(self.theta1))
         Theta1Mask[:,0] = 0; # set the first column to zero
-
         Theta2_grad = Theta2_grad +lambda_reg/m*(theta2*Theta2Mask)
         Theta1_grad = Theta1_grad +lambda_reg/m*(theta1*Theta1Mask)
         
